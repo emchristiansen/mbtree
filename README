@@ -1,3 +1,5 @@
+NOT CURRENTLY IN A USEFUL STATE
+
 @author: Eric Christiansen
 
 An implementation of metric ball trees for fast nearest neighbor in an arbitrary metric space. Unlike techniques like kd-trees or locality sensitive hashing, metric ball trees do not require the data be embedded, they simply require the user provide a metric function for comparing two objects. The hope is to provide a tool like the Fast Library for Approximate Nearest Neighbor (http://people.cs.ubc.ca/~mariusm/index.php/FLANN/FLANN) for metrics which are not easily embedded.

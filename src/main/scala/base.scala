@@ -23,6 +23,7 @@ object L2Vector {
   def apply(data: Double*): L2Vector = L2Vector(data.toList)
 }
 
+// TODO: Come up with a name less lame than "NNFinder"
 abstract class NNFinder[T] { 
   // Returns the index of the point nearest the query, as well as
   // the distance to that point.

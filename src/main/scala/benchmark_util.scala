@@ -23,6 +23,8 @@ object BenchmarkUtil {
       train: IndexedSeq[Metric[T]]): (Double, Int) = { 
     val nn_finder = makeNN(train)
 
+    // TODO: Time the next line, and return it as the
+    // first arg (not "42").
     val counts = test.map(t => nn_finder.FindNearestWithCount(t)._3)
     (42.0, counts.sum)
   }

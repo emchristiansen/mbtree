@@ -1,28 +1,5 @@
 package mbtree
 
-import math._
-
-abstract class Metric[T] { 
-  // This must be a metric in the math sense.
-  def distance(that: Metric[T]): Double
-}
-
-case class L2Vector(val data: List[Double]) extends Metric[L2Vector] { 
-  def distance(uncast: Metric[L2Vector]): Double = { 
-    // TODO: use typesystem to do this intelligently
-    val that = uncast.asInstanceOf[L2Vector]
-    require(data.length == that.data.length)
-    val sum_squared = data.zip(that.data).map(x => pow(x._1 - x._2, 2)).sum
-    sqrt(sum_squared)
-  }
-
-//  override def toString = data.mkString("[", ",", "]")
-}
-
-object L2Vector { 
-  def apply(data: Double*): L2Vector = L2Vector(data.toList)
-}
-
 // TODO: It isn't necessary to always keep the data members of the cluster.
 case class Cluster[T](val centroid: Metric[T], val members: Seq[Metric[T]], val error: Double) { 
   if (!members.contains(centroid)) { 
@@ -52,14 +29,14 @@ case class Tree[T](val data: T, children: List[Tree[T]]) {
   }
 }
 
-object ML {
+object MBTree {
   def TwoMeansAssignToCentroids[T](
       centroid_0: Metric[T], 
       centroid_1: Metric[T],
       metric_objects: Seq[Metric[T]]): 
       (Seq[Metric[T]], Seq[Metric[T]]) = { 
     metric_objects.partition(x => 
-        x.distance(centroid_0) < x.distance(centroid_1))
+        x.Distance(centroid_0) < x.Distance(centroid_1))
   }
 
   def FindCentroidWithError[T](metric_objects: Seq[Metric[T]]): (Metric[T], Double) = { 
@@ -67,7 +44,7 @@ object ML {
 
     // TODO: Make the error function a parameter
     def CumulativeError(metric_object: Metric[T]): Double = 
-        metric_objects.map(x => x.distance(metric_object)).sum
+        metric_objects.map(x => x.Distance(metric_object)).sum
 
     val centroid_pair_errors = metric_objects.map(x => (x, CumulativeError(x)))
     centroid_pair_errors.sortWith(_._2 < _._2).head
@@ -143,7 +120,7 @@ object ML {
       trees match { 
 	case Nil => (nearest, distance)
 	case tree :: tail => { 
-	  val centroid_distance = query.distance(tree.data.centroid)
+	  val centroid_distance = query.Distance(tree.data.centroid)
 	  if (centroid_distance - tree.data.error > distance) { 
 	    // By the triangle inequality we can skip this tree.
 	    Helper(nearest, distance, tail)
@@ -159,9 +136,8 @@ object ML {
       }
     }
 
-    val children_with_distances = cluster_tree.children.map(t => (t, query.distance(t.data.centroid)))
+    val children_with_distances = cluster_tree.children.map(t => (t, query.Distance(t.data.centroid)))
     val sorted_children = children_with_distances.sortWith(_._2 < _._2).map(_._1)
-    Helper(cluster_tree.data.centroid, query.distance(cluster_tree.data.centroid), sorted_children)
+    Helper(cluster_tree.data.centroid, query.Distance(cluster_tree.data.centroid), sorted_children)
   }
 }
-

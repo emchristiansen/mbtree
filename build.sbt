@@ -31,8 +31,8 @@ libraryDependencies ++= Seq(
 "com.frugalmechanic" % "scala-optparse" % "latest.integration",
 "org.scalala" %% "scalala" % "1.0.0.RC2-SNAPSHOT",
 "org.scalatest" %% "scalatest" % "latest.integration",
-"com.github.scala-incubator.io" %% "scala-io-core" % "0.2.0",
-"com.github.scala-incubator.io" %% "scala-io-file" % "0.2.0"
+"com.github.scala-incubator.io" %% "scala-io-core" % "latest.integration",
+"com.github.scala-incubator.io" %% "scala-io-file" % "latest.integration"
 )
 
 // This is a bug workaround

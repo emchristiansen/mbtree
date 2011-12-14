@@ -1,59 +1,31 @@
 package mbtree
 
+import math._
 import org.scalatest.FunSuite
 
-class TestML extends FunSuite {
-  import ML._
+class TestBase extends FunSuite {
+  val v1 = L2Vector(0, 0, 0)
+  val v2 = L2Vector(-1, -1, 1)
+  val v3 = L2Vector(2, 2, 1)
 
-  val a1 = L2Vector(1.0, 0.0)
-  val a2 = L2Vector(10.0, 10.0)
-  val a3 = L2Vector(10.0, 11.0)
-  val a4 = L2Vector(0.0, 0.0)
-  val a5 = L2Vector(2.0, 0.0)
+  // TODO: Redo with ScalaCheck for sexy test autogeneration.
+  test("test L2Vector calculates distances correctly") { 
+    assert(v1.Distance(v1) == 0)
+    assert(v1.Distance(v2) == sqrt(1 + 1 + 1))
+    assert(v1.Distance(v3) == sqrt(4 + 4 + 1))
 
-  test("test assigning points to centroids") { 
-    val (cluster_0, cluster_1) = TwoMeansAssignToCentroids(a1, a2, List(a1, a2, a3, a4, a5))
-
-    assert(cluster_0.size === 3)
-    assert(cluster_0.contains(a1))
-    assert(cluster_0.contains(a4))
-    assert(cluster_0.contains(a5))
-
-    assert(cluster_1.size === 2)
-    assert(cluster_1.contains(a2))
-    assert(cluster_1.contains(a3))
+    assert(v2.Distance(v1) == v1.Distance(v2))
+    assert(v2.Distance(v2) == 0)
+    assert(v2.Distance(v3) == sqrt(9 + 9 + 0))
   }
 
-  test("find the centroid") { 
-    val centroid = FindCentroidWithError(List(a5, a1, a4))._1
-    assert(centroid === a1)
-  }
+  test("spot check BruteNN") { 
+    val brute = new BruteNN(Array(v1, v2, v3))
 
-  test("find the centroid of one point") { 
-    assert(FindCentroidWithError(List(a2))._1 === a2)
-  }
+    val (i1, d1, c1) = brute.FindNearestWithCount(L2Vector(0, 0, .1))
+    assert(d1 === .1); assert(i1 === 0); assert(c1 === 3)
 
-  test("find the centroid of a repeated point") { 
-    assert(FindCentroidWithError(List(a1, a1))._1 === a1)
-  }
-
-  test("make sure can have a mix of repeated and unique points") { 
-    val centroid = FindCentroidWithError(List(a1, a2, a3, a3, a3, a3, a3, a3, a3, a3, a3, a3, a3, a3))._1
-    assert(centroid === a3)
-  }
-
-  test("test 2 means") { 
-    val (c1, c2) = TwoMeansSeeded(a1, a2, List(a1, a2, a3, a4, a5))
-    val m1 = c1.members
-    val m2 = c2.members
-
-    assert(m1.size === 3)
-    assert(m1.contains(a1))
-    assert(m1.contains(a4))
-    assert(m1.contains(a5))
-
-    assert(m2.size === 2)
-    assert(m2.contains(a2))
-    assert(m2.contains(a3))
+    val (i2, d2, c2) = brute.FindNearestWithCount(L2Vector(-1, -2, 4))
+    assert(d2 === sqrt(1 + 9)); assert(i2 === 1); assert(c2 === 3)
   }
 }

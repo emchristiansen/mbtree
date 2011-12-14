@@ -11,10 +11,12 @@ object BenchmarkBruteIris extends App {
     random.shuffle(unshuffled)
   }
 
-//  val (total_time, num_metric_evals) = 
-//      BenchmarkMethod((data: IndexedSeq[Metric[L2Vector]]) => new BruteNN(data), 
-//		      metric_objects, 
-//		      10)
+  val (total_time, num_metric_evals) = Benchmark(
+      (data: IndexedSeq[Metric[L2Vector]]) => new BruteNN(data), 
+      metric_objects.toIndexedSeq, 
+      3)
+
+  println("total time, num metric evals: %.8f, %d".format(total_time, num_metric_evals))
 
   //val (queries, database) = vectors.splitAt(10)
 

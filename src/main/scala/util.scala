@@ -6,6 +6,7 @@ import util.Random
 // A MultiSet is an unordered collection which can contain more than
 // one of a given element.
 // TODO: Make this look like a member of the collections library.
+// See Chapter 25 of Programming in Scala 2nd Edition by Odersky.
 class MultiSet[T](elements: T*) { 
   private val map = new mutable.HashMap[T, Int] {     
     override def default(key: T) = 0
@@ -16,6 +17,19 @@ class MultiSet[T](elements: T*) {
   }
 
   def Count(element: T) = map(element)
+}
+
+// A basic tree data structure, which can generate Dot source (Graphviz).
+case class Tree[T](val data: T, children: List[Tree[T]]) { 
+  def toDotExpressions: List[String] = { 
+    val syntax = "\"%s\" -> \"%s\";"
+    val expressions = for (c <- children) yield syntax.format(data.toString, c.data.toString)
+    expressions ++ children.flatMap(_.toDotExpressions)
+  }
+
+  def toDot: String = { 
+    "digraph Tree {\n" + toDotExpressions.mkString("\n") + "\n}"
+  }
 }
 
 object Util { 

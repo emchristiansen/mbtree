@@ -25,8 +25,10 @@ object BenchmarkUtil {
 
     // TODO: Time the next line, and return it as the
     // first arg (not "42").
+    val start = System.nanoTime
     val counts = test.map(t => nn_finder.FindNearestWithCount(t)._3)
-    (42.0, counts.sum)
+    val diff = System.nanoTime - start
+    (diff, counts.sum)
   }
 
   def Benchmark[T](

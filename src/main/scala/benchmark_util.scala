@@ -21,14 +21,14 @@ object BenchmarkUtil {
       makeNN: (IndexedSeq[Metric[T]]) => NNFinder[T], 
       test: IndexedSeq[Metric[T]],
       train: IndexedSeq[Metric[T]]): (Double, Int) = { 
+    println("training")
     val nn_finder = makeNN(train)
 
-    // TODO: Time the next line, and return it as the
-    // first arg (not "42").
+    println("testing")
     val start = System.nanoTime
     val counts = test.map(t => nn_finder.FindNearestWithCount(t)._3)
-    val diff = System.nanoTime - start
-    (diff, counts.sum)
+    val seconds = (System.nanoTime - start).toDouble / 1000000000
+    (seconds, counts.sum)
   }
 
   def Benchmark[T](

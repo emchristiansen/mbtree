@@ -66,15 +66,18 @@ object Cluster {
 	data_ball_0: DataBall[T], 
 	data_ball_1: DataBall[T]): 
 	(DataBall[T], DataBall[T]) = { 
-      val (data_0, data_1) = 
+      val (new_data_0, new_data_1) = 
 	  TwoCentersAssignToCenters(data_ball_0.center, 
 				   data_ball_1.center, 
 				   data_ball_0.data ++ data_ball_1.data)
-      val new_data_ball_0 = DataBall(MinCoveringBall(data_0), data_0)
-      val new_data_ball_1 = DataBall(MinCoveringBall(data_1), data_1)
+      val new_ball_0 = MinCoveringBall(new_data_0)
+      val new_data_ball_0 = DataBall(new_ball_0, new_data_0)
+      val new_ball_1 = MinCoveringBall(new_data_1)
+      val new_data_ball_1 = DataBall(new_ball_1, new_data_1)
       
       // Recursively call this function until convergence.
-      if (new_data_ball_0 != data_ball_0 || new_data_ball_1 != data_ball_1)
+//      if (new_data_ball_0 != data_ball_0 || new_data_ball_1 != data_ball_1)
+      if (new_ball_0 != data_ball_0.ball || new_ball_1 != data_ball_1.ball)
 	Helper(new_data_ball_0, new_data_ball_1)
       else (new_data_ball_0, new_data_ball_1)
     }

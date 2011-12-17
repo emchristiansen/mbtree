@@ -26,7 +26,7 @@ object BenchmarkMBTreeIris extends App {
   val metric_objects = { 
     val data = LoadIrisData
     val unshuffled = for (d <- data.toList) yield L2Vector(d)
-    random.shuffle(unshuffled.distinct).take(32)
+    random.shuffle(unshuffled.distinct).take(64)
   }
 
   val (total_time, num_metric_evals) = Benchmark(

@@ -3,6 +3,9 @@ package mbtree
 import math._
 import org.scalatest.FunSuite
 
+import BenchmarkUtil._
+import Util._
+
 class TestMBTree extends FunSuite {
   val v1 = L2Vector(0, 0, 0)
   val v2 = L2Vector(-1, -1, 1)
@@ -31,6 +34,29 @@ class TestMBTree extends FunSuite {
       val (mn, md, mc) = m.FindNearestWithCount(q)
 
       assert(bn === mn); assert(bd === md)
+    }
+  }
+
+  test("compare BruteNN to MBTree on UCI iris data") { 
+    val metric_objects = { 
+      val data = LoadIrisData
+      val unshuffled = for (d <- data.toList) yield L2Vector(d)
+      Util.random.shuffle(unshuffled).take(16)
+    }
+
+    val folds = BreakIntoFolds(metric_objects.toIndexedSeq, 3)
+
+    for ((queries, train) <- folds) { 
+      val b = new BruteNN(train)
+      val m = new MBTreeNN(train)
+
+      for (q <- queries) { 
+	val (bn, bd, bc) = b.FindNearestWithCount(q)
+	val (mn, md, mc) = m.FindNearestWithCount(q)
+	
+	assert(train(mn).Distance(q) === md); 
+	assert(bd === md)	
+      }
     }
   }
 }

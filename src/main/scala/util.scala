@@ -7,16 +7,77 @@ import util.Random
 // one of a given element.
 // TODO: Make this look like a member of the collections library.
 // See Chapter 25 of Programming in Scala 2nd Edition by Odersky.
-class MultiSet[T](elements: T*) { 
-  private val map = new mutable.HashMap[T, Int] {     
-    override def default(key: T) = 0
-  }
+class HashMapZero[T] extends mutable.HashMap[T, Int] { 
+  override def default(key: T) = 0
+}
+
+class MultiSet[T] { 
+  private val map = new HashMapZero[T]
+
+  var Size = 0
 
   def Add(element: T) { 
     map(element) += 1
+    Size += 1
+  }
+
+  def Decrement(element: T) { 
+    assert(Contains(element))
+    map(element) -= 1
+    Size -= 1
+
+    if (map(element) == 0) map.remove(element)
+  }
+
+  def Remove(element: T) { 
+    assert(Contains(element))
+    Size -= map(element)
+    map.remove(element)
+  }
+
+  def Clone: MultiSet[T] = { 
+    val clone_map = map.clone
+    MultiSet(clone_map)
   }
 
   def Count(element: T) = map(element)
+
+  def Contains(element: T) = Count(element) > 0
+
+  def Partition(predicate: T => Boolean): (MultiSet[T], MultiSet[T]) = { 
+    val (true_map, false_map) = map.partition(key_with_value => predicate(key_with_value._1))
+    (MultiSet(true_map), MultiSet(false_map))
+  }
+
+  def ElementsNoCount = map.keys
+
+  private def Add(map: mutable.HashMap[T, Int]) { 
+    for ((element, count) <- map;
+         _ <- 0 until count) { 
+      Add(element)
+    }
+  }
+
+  def ++(that: MultiSet[T]): MultiSet[T] = { 
+    val out = new MultiSet[T]
+    out.Add(map)
+    out.Add(that.map)
+    out
+  }
+}
+
+object MultiSet { 
+  def apply[T](map: mutable.HashMap[T, Int]): MultiSet[T] = { 
+    val multi_set = new MultiSet[T]
+    multi_set.Add(map)
+    multi_set
+  }
+
+  def apply[T](elements: T*): MultiSet[T] = { 
+    val multi_set = new MultiSet[T]
+    elements.foreach(multi_set.Add)
+    multi_set
+  }
 }
 
 // A basic tree data structure, which can generate Dot source (Graphviz).

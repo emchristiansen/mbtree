@@ -1,12 +1,13 @@
-import AssemblyKeys._
-seq(assemblySettings: _*)
+//import AssemblyKeys._
+
+//eq(assemblySettings: _*)
 
 name := "mbtree"
 
 scalaVersion := "2.9.1"
 
 scalacOptions ++= Seq(
-"-optimize",
+//"-optimize",
 "-unchecked", 
 "-deprecation"
 )

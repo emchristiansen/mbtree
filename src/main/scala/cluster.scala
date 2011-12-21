@@ -7,12 +7,12 @@ case class Ball[T](val center: Metric[T], val radius: Double)
 // The programmer must ensure the provided data is contained in the
 // provided ball.
 // TODO: Consider getting rid of this class.
-case class DataBall[T](val ball: Ball[T], val data: IndexedSeq[Metric[T]]) { 
+case class DataBall[T](val ball: Ball[T], val data: Bag[Metric[T]]) { 
   def center = ball.center
 
   def radius = ball.radius
 
-  def size = data.size
+  def size = data.sizeNotDistinct
 
   override def toString = { 
     val format = "DataBall:\nCenter: %s\nRadius: %.8f\nNum Elements: %d\n"
@@ -24,30 +24,22 @@ object Cluster {
   def TwoCentersAssignToCenters[T](
       center_0: Metric[T], 
       center_1: Metric[T], 
-      metric_objects: IndexedSeq[Metric[T]]): 
-      (IndexedSeq[Metric[T]], IndexedSeq[Metric[T]]) = { 
-    // It will be convenient later for points equidistant to the centers to
-    // be evenly assigned between the two, as opposed to assigning all to
-    // one center.
-    val (equidistant_points, other_points) = metric_objects.partition(x => 
-        x.Distance(center_0) == x.Distance(center_1))
-    val (equidistant_0, equidistant_1) = 
-	equidistant_points.splitAt(equidistant_points.size / 2)
-    val (closer_to_0, closer_to_1) = other_points.partition(x =>
-	x.Distance(center_0) < x.Distance(center_1))
-    (equidistant_0 ++ closer_to_0, equidistant_1 ++ closer_to_1)
+      metric_objects: Bag[Metric[T]]): 
+      (Bag[Metric[T]], Bag[Metric[T]]) = {     
+    metric_objects.partition {case(key, _) => key.Distance(center_0) <= key.Distance(center_1))}
   }
 
   def MinCoveringBall[T](
-      metric_objects: IndexedSeq[Metric[T]]): Ball[T] = { 
+      metric_objects: Bag[Metric[T]]): Ball[T] = { 
     require(metric_objects.size > 0)
 
     // TODO: Make the error function a parameter
     def MaxError(metric_object: Metric[T]): Double = 
-        metric_objects.map(x => x.Distance(metric_object)).max
+        metric_objects.map {case (key, _) => key.Distance(metric_object)} max
 
-    val centroid_pair_errors = metric_objects.map(x => (x, MaxError(x)))
-    val (center, radius) = centroid_pair_errors.sortWith(_._2 < _._2).head
+    val centroid_pair_errors = metric_objects.map(x => (x, MaxError(x._1)))
+    val (center, radius) = centroid_pair_errors.minBy(_._2)
+    // TODO: Will need to change this when stop storing data redundantly.
     Ball(center, radius)
   }
 
@@ -56,11 +48,11 @@ object Cluster {
   def TwoCentersSeeded[T](
       centroid_0: Metric[T], 
       centroid_1: Metric[T], 
-      metric_objects: IndexedSeq[Metric[T]]): 
+      metric_objects: Bag[Metric[T]]): 
       (DataBall[T], DataBall[T]) = { 
     // TODO: This check is expensive and probably unnecessary.
-    require(metric_objects.contains(centroid_0))
-    require(metric_objects.contains(centroid_1))
+    require(metric_objects.Contains(centroid_0))
+    require(metric_objects.Contains(centroid_1))
 
     def Helper(
 	data_ball_0: DataBall[T], 
@@ -85,20 +77,30 @@ object Cluster {
     // Initialize with everything in |cluster_0| except the
     // centroid of |cluster_1|. We have to be careful, as there may be
     // duplicate points.
+    // val members_0 = { 
+    //   val index = metric_objects.indexWhere(_ == centroid_1)
+    //   metric_objects.take(index) ++ metric_objects.drop(index + 1)
+    // }
     val members_0 = { 
-      val index = metric_objects.indexWhere(_ == centroid_1)
-      metric_objects.take(index) ++ metric_objects.drop(index + 1)
+      val ret = metric_objects.Clone
+      ret.Remove(centroid_1)
+      ret
+    }
+    val members_1 = { 
+      val ret = new Bag[Metric[T]]
+      ret.Add(centroid_1)
+      ret
     }
     val data_ball_0 = DataBall(Ball(centroid_0, Double.MaxValue), members_0)
-    val data_ball_1 = DataBall(Ball(centroid_1, Double.MaxValue), Array(centroid_1))
+    val data_ball_1 = DataBall(Ball(centroid_1, Double.MaxValue), members_1)
     Helper(data_ball_0, data_ball_1)
   }
 
   // Two centers clustering, selecting random elements 
   // to be the initial centroids.
   def TwoCenters[T](
-	metric_objects: IndexedSeq[Metric[T]]): (DataBall[T], DataBall[T]) = {
-    val shuffled = Util.random.shuffle(metric_objects)
+	metric_objects: Bag[Metric[T]]): (DataBall[T], DataBall[T]) = {
+    val shuffled = Util.random.shuffle(metric_objects.ElementsNoCount)
     val centroid_0 :: centroid_1 :: _ = shuffled.toList
     TwoCentersSeeded(centroid_0, centroid_1, metric_objects)
   }
@@ -120,7 +122,7 @@ object Cluster {
 
   // Recursively clusters the data, producing a tree of Balls. The leafs of
   // the tree are Balls of radius 0, corresponding to individual elements.
-  def RecursiveTwoCenters[T](metric_objects: IndexedSeq[Metric[T]]): Tree[Ball[T]] = { 
+  def RecursiveTwoCenters[T](metric_objects: Bag[Metric[T]]): Tree[Ball[T]] = { 
     val ball = MinCoveringBall(metric_objects)
     val data_ball = DataBall(ball, metric_objects)
     RecursiveTwoCentersHelper(data_ball)

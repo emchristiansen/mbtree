@@ -5,7 +5,8 @@ import Cluster._
 class MBTreeNN[T](val data: IndexedSeq[Metric[T]]) extends NNFinder[T] { 
   import MBTree._
   
-  val tree = RecursiveTwoCenters(data)
+  val multi_set = MultiSet(data: _*)
+  val tree = RecursiveTwoCenters(multi_set)
 
   def FindNearestWithCount(query: Metric[T]): (Int, Double, Int) = { 
     val (nearest, distance, count) = FindExactNNPruning(query, tree)

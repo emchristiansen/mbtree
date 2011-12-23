@@ -10,11 +10,11 @@ object BenchmarkBruteIris extends App {
   val metric_objects = { 
     val data = LoadIrisData
     val unshuffled = for (d <- data.toList) yield L2Vector(d)
-    random.shuffle(unshuffled.distinct).take(32)
+    random.shuffle(unshuffled.distinct).take(150)
   }
 
   val (total_time, num_metric_evals) = Benchmark(
-      (data: IndexedSeq[Metric[L2Vector]]) => new BruteNN(data), 
+      (data: IndexedSeq[L2Vector]) => new BruteNN(data), 
       metric_objects.toIndexedSeq, 
       3)
 
@@ -25,11 +25,11 @@ object BenchmarkMBTreeIris extends App {
   val metric_objects = { 
     val data = LoadIrisData
     val unshuffled = for (d <- data.toList) yield L2Vector(d)
-    random.shuffle(unshuffled.distinct).take(64)
+    random.shuffle(unshuffled.distinct).take(150)
   }
 
   val (total_time, num_metric_evals) = Benchmark(
-      (data: IndexedSeq[Metric[L2Vector]]) => new MBTreeNN(data), 
+      (data: IndexedSeq[L2Vector]) => new MBTreeNN(data), 
       metric_objects.toIndexedSeq, 
       3)
 

@@ -4,6 +4,7 @@ import collection.mutable
 import util.Random
 
 // A basic tree data structure, which can generate Dot source (Graphviz).
+// TODO: Make Tree abstract, with Node, Leaf, and perhaps Empty concrete classes.
 case class Tree[T](val data: T, children: List[Tree[T]]) { 
   def toDotExpressions: List[String] = { 
     val syntax = "\"%s\" -> \"%s\";"

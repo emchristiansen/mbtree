@@ -17,10 +17,10 @@ object BenchmarkUtil {
     data
   }
 
-  def Benchmark[T](
-      makeNN: (IndexedSeq[Metric[T]]) => NNFinder[T], 
-      test: IndexedSeq[Metric[T]],
-      train: IndexedSeq[Metric[T]]): (Double, Int) = { 
+  def Benchmark[T <: Metric[T]](
+      makeNN: (IndexedSeq[T]) => NNFinder[T], 
+      test: IndexedSeq[T],
+      train: IndexedSeq[T]): (Double, Int) = { 
     println("training")
     val nn_finder = makeNN(train)
 
@@ -31,9 +31,9 @@ object BenchmarkUtil {
     (seconds, counts.sum)
   }
 
-  def Benchmark[T](
-      makeNN: (IndexedSeq[Metric[T]]) => NNFinder[T],
-      data: IndexedSeq[Metric[T]],
+  def Benchmark[T <: Metric[T]](
+      makeNN: (IndexedSeq[T]) => NNFinder[T],
+      data: IndexedSeq[T],
       fold_depth: Int): (Double, Int) = { 
     val folds = BreakIntoFolds(data, fold_depth)
 

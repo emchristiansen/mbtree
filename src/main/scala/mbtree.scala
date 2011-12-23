@@ -4,12 +4,12 @@ import collection._
 
 import Cluster._
 
-class MBTreeNN[T](val data: IndexedSeq[Metric[T]]) extends NNFinder[T] { 
+class MBTreeNN[T <: Metric[T]](val data: IndexedSeq[T]) extends NNFinder[T] { 
   import MBTree._
 
   val lookup = { 
-    val mutable_map = new mutable.HashMap[Metric[T], List[Int]] { 
-      override def default(key: Metric[T]) = List.empty[Int]
+    val mutable_map = new mutable.HashMap[T, List[Int]] { 
+      override def default(key: T) = List.empty[Int]
     }
     for ((d, i) <- data.zipWithIndex) mutable_map(d) ++= List(i)
     mutable_map.toMap
@@ -17,7 +17,7 @@ class MBTreeNN[T](val data: IndexedSeq[Metric[T]]) extends NNFinder[T] {
   
   val tree = RecursiveTwoCenters(lookup.keys.toSet)
 
-  def FindNearestWithCount(query: Metric[T]): (Int, Double, Int) = { 
+  def FindNearestWithCount(query: T): (Int, Double, Int) = { 
     val (nearest, distance, count) = FindExactNNPruning(query, tree)
 
     // Just take the first index.
@@ -29,11 +29,11 @@ class MBTreeNN[T](val data: IndexedSeq[Metric[T]]) extends NNFinder[T] {
 // TODO: consider renaming this file and object "search",
 // and move the MBTreeNN class to another file, along with BruteNN.
 object MBTree {
-  def FindExactNNPruningHelper[T](
-      query: Metric[T], 
+  def FindExactNNPruningHelper[T <: Metric[T]](
+      query: T, 
       subtree: Tree[Ball[T]], 
-      guess: Metric[T], 
-      num_metric_calls: Int): (Metric[T], Double, Int) = {
+      guess: T, 
+      num_metric_calls: Int): (T, Double, Int) = {
     // Update the best neighbor by considering the root of the tree.
     // TODO: consider making this functional (no var)
     // TODO: avoid recalculating distances
@@ -62,8 +62,8 @@ object MBTree {
     (best, best_distance, num_metric_calls + num_metric_calls_here)
   }
 
-  def FindExactNNPruning[T](
-      query: Metric[T], tree: Tree[Ball[T]]): (Metric[T], Double, Int) = {
+  def FindExactNNPruning[T <: Metric[T]](
+      query: T, tree: Tree[Ball[T]]): (T, Double, Int) = {
     // Just use the root of the tree as the guess.
     val guess = tree.data.center
     FindExactNNPruningHelper(query, tree, guess, 0)

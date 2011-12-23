@@ -1,13 +1,13 @@
 package mbtree
 
 // A ball in a metric space.
-case class Ball[T](val center: Metric[T], val radius: Double)
+case class Ball[T](val center: T, val radius: Double)
 
 // A DataBall is a set of data along with a ball that contains the data.
 // The programmer must ensure the provided data is contained in the
 // provided ball.
 // TODO: Use a private constructor to guarantee the above property.
-case class DataBall[T](val ball: Ball[T], val data: Set[Metric[T]]) { 
+case class DataBall[T](val ball: Ball[T], val data: Set[T]) { 
   def center = ball.center
 
   def radius = ball.radius
@@ -21,20 +21,20 @@ case class DataBall[T](val ball: Ball[T], val data: Set[Metric[T]]) {
 }
 
 object Cluster { 
-  def TwoCentersAssignToCenters[T](
-      center_0: Metric[T], 
-      center_1: Metric[T], 
-      metrics: Set[Metric[T]]): 
-      (Set[Metric[T]], Set[Metric[T]]) = {     
+  def TwoCentersAssignToCenters[T <: Metric[T]](
+      center_0: T, 
+      center_1: T, 
+      metrics: Set[T]): 
+      (Set[T], Set[T]) = {     
     metrics.partition(x => x.Distance(center_0) <= x.Distance(center_1))
   }
 
-  def MinCoveringBall[T](
-      metrics: Set[Metric[T]]): Ball[T] = { 
+  def MinCoveringBall[T <: Metric[T]](
+      metrics: Set[T]): Ball[T] = { 
     require(metrics.size > 0)
 
     // TODO: Make the error function a parameter
-    def MaxError(metric: Metric[T]): Double = 
+    def MaxError(metric: T): Double = 
         metrics.map(x => x.Distance(metric)).max
 
     val centroid_pair_errors = metrics.map(x => (x, MaxError(x)))
@@ -43,7 +43,7 @@ object Cluster {
     Ball(center, radius)
   }
 
-  def TwoCentersSeededHelper[T](
+  def TwoCentersSeededHelper[T <: Metric[T]](
       data_ball_0: DataBall[T], 
       data_ball_1: DataBall[T]): (DataBall[T], DataBall[T]) = {
     val (new_data_0, new_data_1) = 
@@ -63,10 +63,10 @@ object Cluster {
 
   // Cluster data using two centers method, given initial
   // guesses of the centroids.
-  def TwoCentersSeeded[T](
-      centroid_0: Metric[T], 
-      centroid_1: Metric[T], 
-      metrics: Set[Metric[T]]): 
+  def TwoCentersSeeded[T <: Metric[T]](
+      centroid_0: T, 
+      centroid_1: T, 
+      metrics: Set[T]): 
       (DataBall[T], DataBall[T]) = { 
     // TODO: This check is expensive and probably unnecessary.
     require(metrics.contains(centroid_0))
@@ -79,14 +79,14 @@ object Cluster {
 
    
     val data_ball_0 = DataBall(Ball(centroid_0, Double.MaxValue), metrics)
-    val data_ball_1 = DataBall(Ball(centroid_1, Double.MaxValue), Set.empty[Metric[T]])
+    val data_ball_1 = DataBall(Ball(centroid_1, Double.MaxValue), Set.empty[T])
     TwoCentersSeededHelper(data_ball_0, data_ball_1)
   }
 
   // Two centers clustering, selecting random elements 
   // to be the initial centroids.
-  def TwoCenters[T](
-	metrics: Set[Metric[T]]): (DataBall[T], DataBall[T]) = {
+  def TwoCenters[T <: Metric[T]](
+	metrics: Set[T]): (DataBall[T], DataBall[T]) = {
     require(metrics.size >= 2)
 
     // TODO: This is inefficient.
@@ -95,7 +95,7 @@ object Cluster {
     TwoCentersSeeded(centroid_0, centroid_1, metrics)
   }
 
-  def RecursiveTwoCentersHelper[T](data_ball: DataBall[T]): Tree[Ball[T]] = {
+  def RecursiveTwoCentersHelper[T <: Metric[T]](data_ball: DataBall[T]): Tree[Ball[T]] = {
     require(data_ball.size > 0)
 
     val DataBall(ball, data_with_center) = data_ball
@@ -118,7 +118,7 @@ object Cluster {
 
   // Recursively clusters the data, producing a tree of Balls. The leafs of
   // the tree are Balls of radius 0, corresponding to individual elements.
-  def RecursiveTwoCenters[T](metrics: Set[Metric[T]]): Tree[Ball[T]] = { 
+  def RecursiveTwoCenters[T <: Metric[T]](metrics: Set[T]): Tree[Ball[T]] = { 
     val ball = MinCoveringBall(metrics)
     val data_ball = DataBall(ball, metrics)
     RecursiveTwoCentersHelper(data_ball)

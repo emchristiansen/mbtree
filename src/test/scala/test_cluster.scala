@@ -26,62 +26,54 @@ class TestCluster extends FunSuite {
     assert(cluster_1.contains(a3))
   }
 
-  // test("find the centroid") { 
-  //   val ball = MinCoveringBall(MultiSet(a5, a1, a4))
-  //   assert(ball.center === a1)
-  // }
+  test("find the centroid") { 
+    val ball = MinCoveringBall(Set(a5, a1, a4))
+    assert(ball.center === a1)
+  }
 
-  // test("find the ball covering one point") { 
-  //   assert(MinCoveringBall(MultiSet(a2)) === Ball(a2, 0))
-  // }
+  test("find the ball covering one point") { 
+    assert(MinCoveringBall(Set(a2)) === Ball(a2, 0))
+  }
 
-  // test("find the ball covering a repeated point") { 
-  //   assert(MinCoveringBall(MultiSet(a1, a1)) === Ball(a1, 0))
-  // }
+  test("test 2 center") { 
+    val (c1, c2) = TwoCentersSeeded(a1, a2, Set(a1, a2, a3, a4, a5))
+    val m1 = c1.data
+    val m2 = c2.data
 
-  // test("make sure can have a mix of repeated and unique points") { 
-  //   val ball = MinCoveringBall(Array(a1, a2, a2, a3, a3, a3, a3, a3, a3))
-  //   assert(ball.center === a2)
-  // }
+    assert(m1.size === 3)
+    assert(m1.contains(a1))
+    assert(m1.contains(a4))
+    assert(m1.contains(a5))
 
-  // test("test 2 center") { 
-  //   val (c1, c2) = TwoCentersSeeded(a1, a2, Array(a1, a2, a3, a4, a5))
-  //   val m1 = c1.data
-  //   val m2 = c2.data
+    assert(m2.size === 2)
+    assert(m2.contains(a2))
+    assert(m2.contains(a3))
+  }
 
-  //   assert(m1.size === 3)
-  //   assert(m1.contains(a1))
-  //   assert(m1.contains(a4))
-  //   assert(m1.contains(a5))
+  def GetLeafs[T](tree: Tree[T]): List[T] = { 
+    if (tree.children.isEmpty) List(tree.data)
+    else { 
+      val leaf_lists = tree.children.map(GetLeafs)
+      leaf_lists.flatten
+    }
+  }
 
-  //   assert(m2.size === 2)
-  //   assert(m2.contains(a2))
-  //   assert(m2.contains(a3))
-  // }
+  def GetAllNodes[T](tree: Tree[T]): List[T] = { 
+    if (tree.children.isEmpty) List(tree.data)
+    else { 
+      val leaf_lists = tree.children.map(GetAllNodes)
+      tree.data :: leaf_lists.flatten
+    }    
+  }
 
-  // def GetLeafs[T](tree: Tree[T]): List[T] = { 
-  //   if (tree.children.isEmpty) List(tree.data)
-  //   else { 
-  //     val leaf_lists = tree.children.map(GetLeafs)
-  //     leaf_lists.flatten
-  //   }
-  // }
+  test("test recursive 2 centers") { 
+    val data = Set(a1, a2, a3, a4, a5)
+    val tree = RecursiveTwoCenters(data)
 
-  // test("test recursive 2 centers") { 
-  //   val data = Array(a1, a2, a3, a4, a5)
-  //   val tree = RecursiveTwoCenters(data)
+    println(tree.toDot)
 
-  //   val leafs = GetLeafs(tree)
-  //   assert(leafs.size === 5)
-  //   assert(leafs.map(_.center).toSet == data.toSet)
-  // }
-
-  // test("test recursive 2 centers with duplicates") { 
-  //   val data = Array(a1, a1, a1, a2, a3, a3, a4, a4, a4, a5)
-  //   val tree = RecursiveTwoCenters(data)
-
-  //   val leafs = GetLeafs(tree)
-  //   assert(leafs.size === data.size)
-  //   assert(leafs.map(_.center).toSet == data.toSet)
-  // }
+    val leafs = GetAllNodes(tree)
+    assert(leafs.size === data.size)
+    assert(leafs.map(_.center).toSet == data.toSet)
+  }
 }

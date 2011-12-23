@@ -1,6 +1,5 @@
 package mbtree
 
-import Base._
 import BenchmarkUtil._
 import Util._
 

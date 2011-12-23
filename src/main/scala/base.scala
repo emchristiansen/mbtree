@@ -21,6 +21,12 @@ case class L2Vector(val data: List[Double]) extends Metric[L2Vector] {
 
 object L2Vector { 
   def apply(data: Double*): L2Vector = L2Vector(data.toList)
+
+  implicit def toMetric(l2_vector: L2Vector): Metric[L2Vector] = 
+      l2_vector.asInstanceOf[Metric[L2Vector]]
+
+  implicit def toL2Vector(metric: Metric[L2Vector]): L2Vector =
+      metric.asInstanceOf[L2Vector]
 }
 
 // TODO: Come up with a name less lame than "NNFinder"
@@ -45,8 +51,3 @@ class BruteNN[T](val data: IndexedSeq[Metric[T]]) extends NNFinder[T] {
     (index, distance, data.size)
   }
 }
-
-object Base { 
-}
-
-

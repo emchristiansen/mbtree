@@ -6,13 +6,13 @@ case class Ball[T](val center: Metric[T], val radius: Double)
 // A DataBall is a set of data along with a ball that contains the data.
 // The programmer must ensure the provided data is contained in the
 // provided ball.
-// TODO: Consider getting rid of this class.
-case class DataBall[T](val ball: Ball[T], val data: Bag[Metric[T]]) { 
+// TODO: Use a private constructor to guarantee the above property.
+case class DataBall[T](val ball: Ball[T], val data: Set[Metric[T]]) { 
   def center = ball.center
 
   def radius = ball.radius
 
-  def size = data.sizeNotDistinct
+  def size = data.size
 
   override def toString = { 
     val format = "DataBall:\nCenter: %s\nRadius: %.8f\nNum Elements: %d\n"
@@ -24,23 +24,41 @@ object Cluster {
   def TwoCentersAssignToCenters[T](
       center_0: Metric[T], 
       center_1: Metric[T], 
-      metric_objects: Bag[Metric[T]]): 
-      (Bag[Metric[T]], Bag[Metric[T]]) = {     
-    metric_objects.partition {case(key, _) => key.Distance(center_0) <= key.Distance(center_1))}
+      metrics: Set[Metric[T]]): 
+      (Set[Metric[T]], Set[Metric[T]]) = {     
+    metrics.partition(x => x.Distance(center_0) <= x.Distance(center_1))
   }
 
   def MinCoveringBall[T](
-      metric_objects: Bag[Metric[T]]): Ball[T] = { 
-    require(metric_objects.size > 0)
+      metrics: Set[Metric[T]]): Ball[T] = { 
+    require(metrics.size > 0)
 
     // TODO: Make the error function a parameter
-    def MaxError(metric_object: Metric[T]): Double = 
-        metric_objects.map {case (key, _) => key.Distance(metric_object)} max
+    def MaxError(metric: Metric[T]): Double = 
+        metrics.map(x => x.Distance(metric)).max
 
-    val centroid_pair_errors = metric_objects.map(x => (x, MaxError(x._1)))
+    val centroid_pair_errors = metrics.map(x => (x, MaxError(x)))
     val (center, radius) = centroid_pair_errors.minBy(_._2)
     // TODO: Will need to change this when stop storing data redundantly.
     Ball(center, radius)
+  }
+
+  def TwoCentersSeededHelper[T](
+      data_ball_0: DataBall[T], 
+      data_ball_1: DataBall[T]): (DataBall[T], DataBall[T]) = {
+    val (new_data_0, new_data_1) = 
+	TwoCentersAssignToCenters(data_ball_0.center, 
+ 				  data_ball_1.center, 
+				  data_ball_0.data ++ data_ball_1.data)
+    val new_ball_0 = MinCoveringBall(new_data_0)
+    val new_data_ball_0 = DataBall(new_ball_0, new_data_0)
+    val new_ball_1 = MinCoveringBall(new_data_1)
+    val new_data_ball_1 = DataBall(new_ball_1, new_data_1)
+
+    // Recursively call this function until convergence.
+    if (new_ball_0 != data_ball_0.ball || new_ball_1 != data_ball_1.ball)
+      TwoCentersSeededHelper(new_data_ball_0, new_data_ball_1)
+    else (new_data_ball_0, new_data_ball_1)
   }
 
   // Cluster data using two centers method, given initial
@@ -48,83 +66,61 @@ object Cluster {
   def TwoCentersSeeded[T](
       centroid_0: Metric[T], 
       centroid_1: Metric[T], 
-      metric_objects: Bag[Metric[T]]): 
+      metrics: Set[Metric[T]]): 
       (DataBall[T], DataBall[T]) = { 
     // TODO: This check is expensive and probably unnecessary.
-    require(metric_objects.Contains(centroid_0))
-    require(metric_objects.Contains(centroid_1))
+    require(metrics.contains(centroid_0))
+    require(metrics.contains(centroid_1))
 
-    def Helper(
-	data_ball_0: DataBall[T], 
-	data_ball_1: DataBall[T]): 
-	(DataBall[T], DataBall[T]) = { 
-      val (new_data_0, new_data_1) = 
-	  TwoCentersAssignToCenters(data_ball_0.center, 
-				   data_ball_1.center, 
-				   data_ball_0.data ++ data_ball_1.data)
-      val new_ball_0 = MinCoveringBall(new_data_0)
-      val new_data_ball_0 = DataBall(new_ball_0, new_data_0)
-      val new_ball_1 = MinCoveringBall(new_data_1)
-      val new_data_ball_1 = DataBall(new_ball_1, new_data_1)
-      
-      // Recursively call this function until convergence.
-//      if (new_data_ball_0 != data_ball_0 || new_data_ball_1 != data_ball_1)
-      if (new_ball_0 != data_ball_0.ball || new_ball_1 != data_ball_1.ball)
-	Helper(new_data_ball_0, new_data_ball_1)
-      else (new_data_ball_0, new_data_ball_1)
-    }
+    // // Initialize with everything in |cluster_0| except the
+    // // centroid of |cluster_1|. 
+    // val data_0 = metrics - centroid_1
+    // val data_1 = Set(centroid_1)
 
-    // Initialize with everything in |cluster_0| except the
-    // centroid of |cluster_1|. We have to be careful, as there may be
-    // duplicate points.
-    // val members_0 = { 
-    //   val index = metric_objects.indexWhere(_ == centroid_1)
-    //   metric_objects.take(index) ++ metric_objects.drop(index + 1)
-    // }
-    val members_0 = { 
-      val ret = metric_objects.Clone
-      ret.Remove(centroid_1)
-      ret
-    }
-    val members_1 = { 
-      val ret = new Bag[Metric[T]]
-      ret.Add(centroid_1)
-      ret
-    }
-    val data_ball_0 = DataBall(Ball(centroid_0, Double.MaxValue), members_0)
-    val data_ball_1 = DataBall(Ball(centroid_1, Double.MaxValue), members_1)
-    Helper(data_ball_0, data_ball_1)
+   
+    val data_ball_0 = DataBall(Ball(centroid_0, Double.MaxValue), metrics)
+    val data_ball_1 = DataBall(Ball(centroid_1, Double.MaxValue), Set.empty[Metric[T]])
+    TwoCentersSeededHelper(data_ball_0, data_ball_1)
   }
 
   // Two centers clustering, selecting random elements 
   // to be the initial centroids.
   def TwoCenters[T](
-	metric_objects: Bag[Metric[T]]): (DataBall[T], DataBall[T]) = {
-    val shuffled = Util.random.shuffle(metric_objects.ElementsNoCount)
+	metrics: Set[Metric[T]]): (DataBall[T], DataBall[T]) = {
+    require(metrics.size >= 2)
+
+    // TODO: This is inefficient.
+    val shuffled = Util.random.shuffle(metrics.toList)
     val centroid_0 :: centroid_1 :: _ = shuffled.toList
-    TwoCentersSeeded(centroid_0, centroid_1, metric_objects)
+    TwoCentersSeeded(centroid_0, centroid_1, metrics)
   }
 
   def RecursiveTwoCentersHelper[T](data_ball: DataBall[T]): Tree[Ball[T]] = {
     require(data_ball.size > 0)
 
-    if (data_ball.size == 1) { 
-      assert(data_ball.radius == 0)
-      Tree(data_ball.ball, List())
+    val DataBall(ball, data_with_center) = data_ball
+    val data = data_with_center - ball.center
+
+    val children = if (data.size == 0) { 
+      List()
+    } else if (data.size == 1) { 
+      val child = Tree(Ball(data.head, 0), List())
+      List(child)
+    } else {
+      val (data_ball_0, data_ball_1) = TwoCenters(data)
+      val child_0 = RecursiveTwoCentersHelper(data_ball_0)
+      val child_1 = RecursiveTwoCentersHelper(data_ball_1)
+      List(child_0, child_1)
     }
-    else { 
-      val (data_ball_0, data_ball_1) = TwoCenters(data_ball.data)
-      val tree_0 = RecursiveTwoCentersHelper(data_ball_0)
-      val tree_1 = RecursiveTwoCentersHelper(data_ball_1)
-      Tree(data_ball.ball, List(tree_0, tree_1))
-    }
+
+    Tree(ball, children)
   }
 
   // Recursively clusters the data, producing a tree of Balls. The leafs of
   // the tree are Balls of radius 0, corresponding to individual elements.
-  def RecursiveTwoCenters[T](metric_objects: Bag[Metric[T]]): Tree[Ball[T]] = { 
-    val ball = MinCoveringBall(metric_objects)
-    val data_ball = DataBall(ball, metric_objects)
+  def RecursiveTwoCenters[T](metrics: Set[Metric[T]]): Tree[Ball[T]] = { 
+    val ball = MinCoveringBall(metrics)
+    val data_ball = DataBall(ball, metrics)
     RecursiveTwoCentersHelper(data_ball)
   }
 }

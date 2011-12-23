@@ -3,7 +3,6 @@ package mbtree
 import org.scalatest.FunSuite
 
 import Cluster._
-import MultiSet._
 
 class TestCluster extends FunSuite { 
   val a1 = L2Vector(1.0, 0.0)
@@ -12,20 +11,20 @@ class TestCluster extends FunSuite {
   val a4 = L2Vector(0.0, 0.0)
   val a5 = L2Vector(2.0, 0.0)
 
-  // test("test assigning points to centers") { 
-  //   val all_data = MultiSet(a1, a2, a3, a4, a5)
-  //   val (cluster_0, cluster_1) = 
-  // 	TwoCentersAssignToCenters(a1, a2, all_data)
+  test("test assigning points to centers") { 
+    val all_data = Set(a1, a2, a3, a4, a5)
+    val (cluster_0, cluster_1) = 
+  	TwoCentersAssignToCenters(a1, a2, all_data)
 
-  //   assert(cluster_0.Size === 3)
-  //   assert(cluster_0.Contains(a1))
-  //   assert(cluster_0.Contains(a4))
-  //   assert(cluster_0.Contains(a5))
+    assert(cluster_0.size === 3)
+    assert(cluster_0.contains(a1))
+    assert(cluster_0.contains(a4))
+    assert(cluster_0.contains(a5))
 
-  //   assert(cluster_1.Size === 2)
-  //   assert(cluster_1.Contains(a2))
-  //   assert(cluster_1.Contains(a3))
-  // }
+    assert(cluster_1.size === 2)
+    assert(cluster_1.contains(a2))
+    assert(cluster_1.contains(a3))
+  }
 
   // test("find the centroid") { 
   //   val ball = MinCoveringBall(MultiSet(a5, a1, a4))

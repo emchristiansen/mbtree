@@ -19,6 +19,16 @@ object L2Vector {
   def apply(data: Double*): L2Vector = L2Vector(data.toList)
 }
 
+case class L1Vector(val data: List[Double]) extends Metric[L1Vector] { 
+  def Distance(that: L1Vector): Double = { 
+    data.zip(that.data).map(p => p._1 - p._2).map(abs).sum
+  }
+}
+
+object L1Vector { 
+  def apply(data: Double*): L1Vector = L1Vector(data.toList)
+}
+
 // TODO: Come up with a name less lame than "NNFinder"
 abstract class NNFinder[T <: Metric[T]] { 
   // Returns the index of the point nearest the query, as well as

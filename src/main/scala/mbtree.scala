@@ -29,25 +29,30 @@ class MBTreeNN[T <: Metric[T]](val data: IndexedSeq[T]) extends NNFinder[T] {
 // TODO: consider renaming this file and object "search",
 // and move the MBTreeNN class to another file, along with BruteNN.
 object MBTree {
+  // Invariant: The guess distance is always at least as good as the distance
+  // to the root of the tree.
   def FindExactNNPruningHelper[T <: Metric[T]](
       query: T, 
       subtree: Tree[Ball[T]], 
-      guess: T): (T, Double) = {
+      guess: T,
+      guess_distance: Double): (T, Double) = {
     // Update the best neighbor by considering the root of the tree.
     // TODO: consider making this functional (no var)
-    // TODO: avoid recalculating distances
-    var (best, best_distance) = { 
-      val guess_distance = query.Distance(guess)
-      val root_distance = query.Distance(subtree.data.center)
-      if (guess_distance < root_distance) (guess, guess_distance)
-      else (subtree.data.center, root_distance)
-    }
+    val children_distances = subtree.children.map(_.data.center.Distance(query))
+    val children_with_distances = subtree.children.zip(children_distances).sortBy(_._2)
 
     // Examine the children, if any, for a closer neighbor.
-    for (c <- subtree.children;
-         if query.Distance(c.data.center) - c.data.radius < best_distance) { 
+    var best = guess
+    var best_distance = guess_distance
+    for ((c, d) <- children_with_distances;
+         if d - c.data.radius < best_distance) {
+      if (d < best_distance) { 
+	best = c.data.center
+	best_distance = d
+      }
+
       val (child_best, child_best_distance) = 
-	  FindExactNNPruningHelper(query, c, best)
+	  FindExactNNPruningHelper(query, c, best, best_distance)
 
       // If we find better values in the child, update.
       if (child_best_distance < best_distance) {
@@ -63,6 +68,6 @@ object MBTree {
       query: T, tree: Tree[Ball[T]]): (T, Double) = {
     // Just use the root of the tree as the guess.
     val guess = tree.data.center
-    FindExactNNPruningHelper(query, tree, guess)
+    FindExactNNPruningHelper(query, tree, guess, query.Distance(guess))
   }
 }

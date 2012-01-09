@@ -5,6 +5,18 @@ import org.scalatest.FunSuite
 import Util._
 
 class TestUtil extends FunSuite { 
+  test("RandomSubrange should return values in the given range") { 
+    val range = -50 until 100
+    val r1 = RandomSubrange(range, 10)
+
+    assert(r1.size === 10)
+    assert(r1.map(range contains _) === Set(true))
+
+    val r2 = RandomSubrange(range, 100)
+    assert(r2.size === 100)
+    assert(r2.map(range contains _) === Set(true))
+  }
+
   test("test BreakIntoFolds") { 
     val data = 0 until 15
     // Break into 2 ^ 2 == 4 folds.

@@ -3,6 +3,8 @@ package mbtree
 import math._
 import org.scalatest.FunSuite
 
+import mbtree.extra._
+
 class TestBase extends FunSuite {
   val v1 = L2Vector(0, 0, 0)
   val v2 = L2Vector(-1, -1, 1)
@@ -22,10 +24,10 @@ class TestBase extends FunSuite {
   test("spot check BruteNN") { 
     val brute = new BruteNN(Array(v1, v2, v3))
 
-    val (i1, d1, c1) = brute.FindNearestWithCount(L2Vector(0, 0, .1))
-    assert(d1 === .1); assert(i1 === 0); assert(c1 === 3)
+    val (i1, d1) = brute.FindNearest(L2Vector(0, 0, .1))
+    assert(d1 === .1); assert(i1 === 0)
 
-    val (i2, d2, c2) = brute.FindNearestWithCount(L2Vector(-1, -2, 4))
-    assert(d2 === sqrt(1 + 9)); assert(i2 === 1); assert(c2 === 3)
+    val (i2, d2) = brute.FindNearest(L2Vector(-1, -2, 4))
+    assert(d2 === sqrt(1 + 9)); assert(i2 === 1)
   }
 }

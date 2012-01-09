@@ -2,6 +2,7 @@ package mbtree
 
 import org.scalatest.FunSuite
 
+import mbtree.extra._
 import Cluster._
 
 class TestCluster extends FunSuite { 
@@ -27,12 +28,12 @@ class TestCluster extends FunSuite {
   }
 
   test("find the centroid") { 
-    val ball = MinCoveringBall(Set(a5, a1, a4))
+    val ball = Ball(Set(a5, a1, a4))
     assert(ball.center === a1)
   }
 
   test("find the ball covering one point") { 
-    assert(MinCoveringBall(Set(a2)) === Ball(a2, 0))
+    assert(Ball(Set(a2)) === Ball(a2, 0))
   }
 
   test("test 2 center") { 
@@ -50,14 +51,6 @@ class TestCluster extends FunSuite {
     assert(m2.contains(a3))
   }
 
-  def GetLeafs[T](tree: Tree[T]): List[T] = { 
-    if (tree.children.isEmpty) List(tree.data)
-    else { 
-      val leaf_lists = tree.children.map(GetLeafs)
-      leaf_lists.flatten
-    }
-  }
-
   def GetAllNodes[T](tree: Tree[T]): List[T] = { 
     if (tree.children.isEmpty) List(tree.data)
     else { 
@@ -70,10 +63,8 @@ class TestCluster extends FunSuite {
     val data = Set(a1, a2, a3, a4, a5)
     val tree = RecursiveTwoCenters(data)
 
-    println(tree.toDot)
-
-    val leafs = GetAllNodes(tree)
-    assert(leafs.size === data.size)
-    assert(leafs.map(_.center).toSet == data.toSet)
+    val nodes = GetAllNodes(tree)
+    assert(nodes.size === data.size)
+    assert(nodes.map(_.center).toSet == data.toSet)
   }
 }

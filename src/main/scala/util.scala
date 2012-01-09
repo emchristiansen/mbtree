@@ -1,30 +1,53 @@
 package mbtree
 
-import collection.mutable
-import util.Random
-
-// A basic tree data structure, which can generate Dot source (Graphviz).
-// TODO: Make Tree abstract, with Node, Leaf, and perhaps Empty concrete classes.
-case class Tree[T](val data: T, children: List[Tree[T]]) { 
-  def toDotExpressions: List[String] = { 
-    val syntax = "\"%s\" -> \"%s\";"
-    val expressions = for (c <- children) yield syntax.format(data.toString, c.data.toString)
-    expressions ++ children.flatMap(_.toDotExpressions)
-  }
-
-  def toDot: String = { 
-    "digraph Tree {\n" + toDotExpressions.mkString("\n") + "\n}"
-  }
-}
+// A basic tree data structure.
+case class Tree[T](val data: T, val children: List[Tree[T]])
 
 object Util { 
-  val random = new Random(0)
+  val random = new util.Random(0)
+
+  def RandomSubrangeHelper(
+      range: Range, 
+      size: Int, 
+      selected: Set[Int]): Set[Int] = { 
+    require(range.size >= 2 * size)
+
+    if (selected.size == size) selected
+    else { 
+      val random_pick = (math.abs(random.nextInt) % (range.max + 1 - range.min)) + range.min
+      RandomSubrangeHelper(range, size, selected + random_pick)
+    }
+  }
+
+  // Returns a random subset of the given range of the given size.
+  // So RandomSubrange(Range(0, 10), 4) might return (2, 3, 5, 8).
+  def RandomSubrange(range: Range, size: Int): Set[Int] = { 
+    require(range.size >= size)
+
+    // Use one of two methods according to the relative size of the subset.
+    if (range.size < 2 * size) random.shuffle(range).take(size).toSet
+    else RandomSubrangeHelper(range, size, Set())
+  }
+  
+  // Returns a random subset of the given data of the given cardinality.
+  def RandomSample[T](data: IndexedSeq[T], size: Int): IndexedSeq[T] = { 
+    require(data.size >= size)
+
+    val random_indices = { 
+      val random_set = RandomSubrange(0 until data.size, size)
+      random_set.toIndexedSeq.sortWith(_ < _)
+    }
+    assert(random_indices.size == size)
+
+    // Poor man's slicing.
+    for (index <- random_indices) yield data(index)
+  }
 
   // Break into folds recursively; easier to code than how you might implement
   // standard k-fold cross validation.
   def BreakIntoFolds[T](
       data: IndexedSeq[T], 
-      fold_depth: Int): List[(IndexedSeq[T], IndexedSeq[T])] = { 
+      fold_depth: Int): List[(IndexedSeq[T], IndexedSeq[T])] = {
     require(fold_depth >= 1)
 
     val (front, back) = data.splitAt(data.size / 2)

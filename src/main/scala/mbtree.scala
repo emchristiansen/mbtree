@@ -17,12 +17,12 @@ class MBTreeNN[T <: Metric[T]](val data: IndexedSeq[T]) extends NNFinder[T] {
   
   val tree = RecursiveTwoCenters(lookup.keys.toSet)
 
-  def FindNearestWithCount(query: T): (Int, Double, Int) = { 
-    val (nearest, distance, count) = FindExactNNPruning(query, tree)
+  def FindNearest(query: T): (Int, Double) = { 
+    val (nearest, distance) = FindExactNNPruning(query, tree)
 
     // Just take the first index.
     val index = lookup(nearest).head
-    (index, distance, count)
+    (index, distance)
   }
 }
 
@@ -32,8 +32,7 @@ object MBTree {
   def FindExactNNPruningHelper[T <: Metric[T]](
       query: T, 
       subtree: Tree[Ball[T]], 
-      guess: T, 
-      num_metric_calls: Int): (T, Double, Int) = {
+      guess: T): (T, Double) = {
     // Update the best neighbor by considering the root of the tree.
     // TODO: consider making this functional (no var)
     // TODO: avoid recalculating distances
@@ -45,12 +44,10 @@ object MBTree {
     }
 
     // Examine the children, if any, for a closer neighbor.
-    var num_metric_calls_here = 1
     for (c <- subtree.children;
          if query.Distance(c.data.center) - c.data.radius < best_distance) { 
-      val (child_best, child_best_distance, metric_calls) = 
-	  FindExactNNPruningHelper(query, c, best, 0)
-      num_metric_calls_here += metric_calls
+      val (child_best, child_best_distance) = 
+	  FindExactNNPruningHelper(query, c, best)
 
       // If we find better values in the child, update.
       if (child_best_distance < best_distance) {
@@ -59,13 +56,13 @@ object MBTree {
       }
     }
       
-    (best, best_distance, num_metric_calls + num_metric_calls_here)
+    (best, best_distance)
   }
 
   def FindExactNNPruning[T <: Metric[T]](
-      query: T, tree: Tree[Ball[T]]): (T, Double, Int) = {
+      query: T, tree: Tree[Ball[T]]): (T, Double) = {
     // Just use the root of the tree as the guess.
     val guess = tree.data.center
-    FindExactNNPruningHelper(query, tree, guess, 0)
+    FindExactNNPruningHelper(query, tree, guess)
   }
 }

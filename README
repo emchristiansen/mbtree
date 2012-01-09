@@ -1,9 +1,16 @@
 PRE-ALPHA CODE: BEWARE
 
-@author: Eric Christiansen
-@author: Iljung Sam Kwak
+Author: Eric Christiansen
 
 An implementation of metric ball trees for fast nearest neighbor in an arbitrary metric space. Unlike techniques like kd-trees or locality sensitive hashing, metric ball trees do not require the data be embedded, they simply require the user provide a metric function for comparing two objects. The hope is to provide a tool like the Fast Library for Approximate Nearest Neighbor (http://people.cs.ubc.ca/~mariusm/index.php/FLANN/FLANN) for metrics which are not easily embedded.
+
+This library is benchmarked in the project at:
+
+https://github.com/emchristiansen/benchmark-mbtree
+
+Note the above is also a good place to look for usage examples. In addition, the benchmarks are discussed at:
+
+http://emc-fall2011-fastdoppelganger.blogspot.com/
 
 References:
 http://en.wikipedia.org/wiki/Metric_tree

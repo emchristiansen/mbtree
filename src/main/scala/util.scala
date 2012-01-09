@@ -6,6 +6,19 @@ case class Tree[T](val data: T, val children: List[Tree[T]])
 object Util { 
   val random = new util.Random(0)
 
+  class BoundedPriorityQueue[T](max_size: Int)(implicit ord: Ordering[T]) { 
+    val data = new collection.mutable.PriorityQueue[T]()(ord)
+
+    def +=(element: T) { 
+      data += element
+      if (data.size > max_size) data.dequeue
+    }
+
+    def AtCapacity = data.size == max_size
+
+    def AsSortedList = data.toList.sorted(ord)
+  }
+
   def RandomSubrangeHelper(
       range: Range, 
       size: Int, 

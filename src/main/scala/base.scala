@@ -11,14 +11,19 @@ trait Metric[T] {
 abstract class NNFinder[T <: Metric[T]] { 
   // Returns the index of the point nearest the query, as well as
   // the distance to that point.
-  def FindNearest(query: T): (Int, Double)
+  def FindNearest(query: T): (Int, Double) = FindNearest(query, 1).head
+
+  // Find |num| nearest neighbors.
+  def FindNearest(query: T, num: Int): Seq[(Int, Double)]
 }
 
 // TODO: Consider changing to view bounds "<%" to make these
 // methods more general.
 class BruteNN[T <: Metric[T]](val data: IndexedSeq[T]) extends NNFinder[T] {
-  def FindNearest(query: T): (Int, Double) = 
-      data.map(x => x.Distance(query)).zipWithIndex.minBy(_._1).swap
+  def FindNearest(query: T, num: Int): Seq[(Int, Double)] = {
+    val sorted = data.map(x => x.Distance(query)).zipWithIndex.sortBy(_._1)
+    sorted.take(num).map(_.swap)
+  }
 }
 
 // It isn't necessary to import this package to use the library.

@@ -5,6 +5,25 @@ import org.scalatest.FunSuite
 import Util._
 
 class TestUtil extends FunSuite { 
+  test("test BinarySearch") { 
+    def RandomChar = { 
+      ('a' to 'z')(Util.random.nextInt(26))
+    }
+
+    val random_vals = 100 TimesMap RandomChar
+    val sorted = random_vals.sortWith(_ < _)
+
+    val queries = 100 TimesMap RandomChar
+
+    def IsLessThan(x: Char, y: Char): Boolean = x < y
+
+    for (q <- queries) { 
+      val index = BinarySearch(q, sorted, IsLessThan)
+      for (i <- 0 until index) assert(sorted(i) <= q)
+      for (i <- index until sorted.size) assert(sorted(i) >= q)
+    }
+  }
+
   test("RandomSubrange should return values in the given range") { 
     val range = -50 until 100
     val r1 = RandomSubrange(range, 10)

@@ -80,7 +80,7 @@ class TestMBTree extends FunSuite {
     }
   }
 
-  test("compare BruteNN to MBTreeNN with 2 NN on a bunch of random data") { 
+  test("compare BruteNN to MBTreeNN with 7 NN on a bunch of random data") { 
     val dimension = 5
     val num_data = 37
     val num_neighbors = 7

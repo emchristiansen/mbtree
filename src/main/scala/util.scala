@@ -6,6 +6,36 @@ case class Tree[T](val data: T, val children: List[Tree[T]])
 object Util { 
   val random = new util.Random(0)
 
+  class TimesDoClass(val n: Int) { 
+    def TimesDo(f: => Unit): Unit = (1 to n) foreach (_ => f)
+    def TimesMap[T](f: => T): IndexedSeq[T] = (1 to n) map (_ => f)
+  }
+
+  implicit def ToTimesDoClass(n: Int) = new TimesDoClass(n)
+
+  // Returns the insert location for the query assuming we're doing insertion sort.
+  // Writing this when tired, and as simple as it is I think 
+  // I may have screwed it up.
+  def BinarySearch[T](query: T, sorted_data: IndexedSeq[T], IsLessThan: (T, T) => Boolean): Int = { 
+    // Invariant: The insert-sort index is always included in [min, max] (inclusive).
+    def BinarySearchHelper(
+      min: Int,
+      max: Int): Int = { 
+      require(max > min)
+
+      if (max == min + 1) {
+	if (IsLessThan(query, sorted_data(min))) min
+	else max
+      } else { 
+	val mid = (max + min) / 2
+	if (IsLessThan(query, sorted_data(mid))) BinarySearchHelper(min, mid)
+	else BinarySearchHelper(mid, max)
+      }
+    }
+
+    BinarySearchHelper(0, sorted_data.size)
+  }
+
   class BoundedPriorityQueue[T](max_size: Int)(implicit ord: Ordering[T]) { 
     val data = new collection.mutable.PriorityQueue[T]()(ord)
 

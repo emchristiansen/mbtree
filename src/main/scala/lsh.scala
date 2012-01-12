@@ -69,7 +69,10 @@ class CharikarList(val bit_vectors: IndexedSeq[BitVector], val permutation: Seq[
 
     val min_index = 0.max(nearest - radius)
     val max_index = sorted.size.min(nearest + radius)
-    for (i <- min_index until max_index) yield sorted(i)._2
+    val neighbors: IndexedSeq[Int] = for (i <- min_index until max_index) yield sorted(i)._2
+    assert(neighbors.size >= radius)
+    assert(neighbors.size <= 2 * radius)
+    neighbors
   }
 }
 
@@ -94,18 +97,20 @@ class CharikarNN[T <: Metric[T]](
 
   val dimension = hasher.dimension
 
-  val bit_vectors = metrics.map(hasher.Hash)
+  val bit_vectors = metrics.par.map(hasher.Hash).toIndexedSeq
 
   val permutations = for (i <- 0 until num_permutations) yield { 
     Util.random.shuffle(0 until dimension)
   } toIndexedSeq
 
-  val permuted_lists = for (p <- permutations) yield { 
-    new CharikarList(bit_vectors, p)
+  val permuted_lists = { 
+    val par = for (p <- permutations.par) yield new CharikarList(bit_vectors, p)
+    par.toIndexedSeq
   }
 
   def Nearest(query: BitVector, radius: Int): Set[Int] = { 
-    val neighbor_lists = for (pl <- permuted_lists) yield pl.Nearest(query, radius)
+    // Parallel!
+    val neighbor_lists = for (pl <- permuted_lists.par) yield pl.Nearest(query, radius)
     neighbor_lists.fold(Seq())(_ ++ _).toSet
   }
 
@@ -131,8 +136,8 @@ class MetricLSHNN[T <: Metric[T]](
 
   def FindNearest(query: T, num: Int): Seq[(Int, Double)] = {
     // Some paramter values that seem reasonable.
-    val num_rescore = 10 * num
-    val radius = (num_rescore.toDouble / num_permutations.toDouble).ceil.toInt * 10
+    val num_rescore = 2 * dimension * num
+    val radius = (num_rescore.toDouble / num_permutations.toDouble).ceil.toInt
     FindNearest(query, num, radius, num_rescore)
   }
 
@@ -140,12 +145,15 @@ class MetricLSHNN[T <: Metric[T]](
   // from each permutation. |num_rescore| is the number of likely nearest
   // neighbors which will be rescored using the original metric.
   def FindNearest(query: T, num: Int, radius: Int, num_rescore: Int): Seq[(Int, Double)] = { 
+    // println("radius, num_rescore, num_permutations, size: %d, %d, %d, %d".format(radius, num_rescore, num_permutations, metrics.size))
+    // println("max num bit rescore: %d".format(radius * num_permutations * 2))
     require(num <= num_rescore)
 
     val hashed_query = hasher.Hash(query)
     val charikar_neighbors = charikar.Nearest(hashed_query, radius).toIndexedSeq
     
-    assert(num_rescore <= charikar_neighbors.size)
+//    println("cns: %d".format(charikar_neighbors.size))
+//    assert(num_rescore <= charikar_neighbors.size)
 
     // Sort by Hamming distance and take the |num_rescore| nearest.
     val hamming_nearest = charikar_neighbors.sortBy(x => charikar.Distance(hashed_query, x)).take(num_rescore)
